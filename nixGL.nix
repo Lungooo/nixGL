@@ -130,10 +130,12 @@ let
 
               ${
                 lib.optionalString (api == "Vulkan")
-                ''export VK_ICD_FILENAMES=${nvidiaLibsOnly}/share/vulkan/icd.d/nvidia_icd.x86_64.json${
+                ''NVIDIA_ICD=(${nvidiaLibsOnly}/share/vulkan/icd.d/*.json${
                   lib.optionalString enable32bits
-                  ":${nvidiaLibsOnly.lib32}/share/vulkan/icd.d/nvidia_icd.i686.json"
-                }"''${VK_ICD_FILENAMES:+:$VK_ICD_FILENAMES}"''
+                  " ${nvidiaLibsOnly.lib32}/share/vulkan/icd.d/*.json"
+                })
+                NVIDIA_ICD_FILENAMES=$(IFS=:; echo "''${NVIDIA_ICD[*]}")
+                export VK_ICD_FILENAMES="''${NVIDIA_ICD_FILENAMES}''${VK_ICD_FILENAMES:+:$VK_ICD_FILENAMES}"''
               }
               export LD_LIBRARY_PATH=${
                 lib.makeLibraryPath ([ libglvnd nvidiaLibsOnly ]
