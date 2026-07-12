@@ -83,6 +83,18 @@ let
             builtins.fetchurl url;
           useGLVND = true;
           nativeBuildInputs = oldAttrs.nativeBuildInputs or [] ++ [zstd];
+          # Some driver releases (e.g. 510.54) ship both
+          # `libnvidia-compiler.so.<v>` and `libnvidia-compiler-next.so.<v>`,
+          # where the `-next` variant's SONAME equals the regular variant's
+          # filename.
+          # nixpkgs' nvidia-x11 installPhase then fails to
+          # `ln -s libnvidia-compiler-next.so.<v> libnvidia-compiler.so.<v>`
+          # because that path is already a real file. Therefore, drop
+          # redundant `-next` libraries (its SONAME points to the regular one
+          # anyway) so the symlink step has nothing to collide with.
+          postUnpack = (oldAttrs.postUnpack or "") + ''
+            rm -f libnvidia-compiler-next.so.*
+          '';
         });
 
       nvidiaLibsOnly = nvidiaDrivers.override {
